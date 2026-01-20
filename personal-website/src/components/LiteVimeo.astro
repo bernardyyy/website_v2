@@ -1,0 +1,124 @@
+---
+const { videoId } = Astro.props;
+---
+
+<div class="vimeo-wrapper" data-video-id={videoId}>
+  <img 
+    src={`https://vumbnail.com/${videoId}.jpg`}
+    alt="Video thumbnail"
+    class="video-thumb"
+  />
+</div>
+
+<style>
+  .vimeo-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    background: #000;
+    cursor: pointer;
+  }
+  
+  .video-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.4s ease-out;
+    z-index: 2;
+  }
+  
+  .vimeo-wrapper.loading .video-thumb {
+    opacity: 0.5;
+  }
+  
+  /* Esconde o poster com fade quando o vídeo já está a tocar (evita tela preta + flash de controles) */
+  .vimeo-wrapper.hide-poster .video-thumb {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .vimeo-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    z-index: 1;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const wrappers = document.querySelectorAll('.vimeo-wrapper');
+    
+    // Função para carregar vídeo automaticamente
+    const loadVideo = (wrapper: Element) => {
+      const videoId = wrapper.getAttribute('data-video-id');
+      if (!videoId) return;
+      
+      // Verifica se já foi carregado
+      if (wrapper.querySelector('iframe')) return;
+      
+      wrapper.classList.add('loading');
+      
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&background=1&loop=1&autopause=0&controls=0&badge=0`;
+      iframe.allow = 'autoplay; fullscreen';
+      iframe.allowFullscreen = true;
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.position = 'absolute';
+      iframe.style.top = '0';
+      iframe.style.left = '0';
+      iframe.style.border = '0';
+      
+      wrapper.appendChild(iframe);
+      
+      // Mantém o poster por cima do iframe (z-index) e só faz fade-out depois de o vídeo
+      // ter tempo de buffer. Evita: flash de controles do Vimeo + tela preta antes do autoplay.
+      iframe.addEventListener('load', () => {
+        wrapper.classList.remove('loading');
+        // Espera o vídeo começar a tocar (reduz tela preta) e o player aplicar controls=0
+        const fadeOut = () => {
+          wrapper.classList.add('hide-poster');
+          setTimeout(() => {
+            const thumb = wrapper.querySelector('.video-thumb');
+            if (thumb) thumb.remove();
+            wrapper.classList.remove('hide-poster');
+          }, 450);
+        };
+        setTimeout(fadeOut, 700);
+      });
+    };
+    
+    // Observer para carregar quando entrar na viewport
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          loadVideo(entry.target);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { 
+      rootMargin: '300px', // Start loading earlier
+      threshold: 0.01 
+    });
+    
+    wrappers.forEach(wrapper => {
+      // Click manual também funciona
+      wrapper.addEventListener('click', () => {
+        if (!wrapper.querySelector('iframe')) {
+          loadVideo(wrapper);
+        }
+      });
+      
+      // Observa para autoplay
+      observer.observe(wrapper);
+    });
+  });
+</script>
