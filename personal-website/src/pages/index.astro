@@ -1,11 +1,10 @@
 ---
-title: Projects
----
+// Assuming the rest of the file is unchanged above this line
+const projects = [...] // Existing projects array
 
-<ul>
-{{#each projects}}
-  {{#unless this.draft }}
-    <li>{{this.title}}</li>
-  {{/unless}}
-{{/each}}
-</ul>
+const publishedProjects = projects.filter(project => !project.draft);
+
+document.querySelector('#project-list').innerHTML = publishedProjects.map(project => {
+    return `<div>${project.name}</div>`;
+}).join('');
+---
