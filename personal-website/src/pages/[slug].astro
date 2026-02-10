@@ -1,5 +1,14 @@
-// Logic to filter projects
-const projects = await getProjects();
-const filteredProjects = projects.filter(project => !project.draft);
+// Updated getStaticPaths function to filter out draft projects and projectSequence calculation
 
-// Use filteredProjects for static path generation
+export async function getStaticPaths() {
+  const projects = await getProjects();
+  return projects
+    .filter(project => !project.draft) // Filter out draft projects
+    .map(project => ({
+      params: { slug: project.slug },
+    }));
+}
+
+const projectSequence = projects.filter(p => !p.draft); // Use only published projects
+
+// The rest of your file content...
