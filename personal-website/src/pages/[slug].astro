@@ -1,14 +1,95 @@
-// Updated getStaticPaths function to filter out draft projects and projectSequence calculation
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LiteVimeo from '../components/LiteVimeo.astro';
+import projects from '../data/projects.json';
+import { Fragment } from 'astro/jsx-runtime';
 
-export async function getStaticPaths() {
-  const projects = await getProjects();
-  return projects
-    .filter(project => !project.draft) // Filter out draft projects
-    .map(project => ({
-      params: { slug: project.slug },
-    }));
+export function getStaticPaths() {
+  const publishedProjects = projects.filter(p => !p.draft);
+  return publishedProjects.map(project => ({
+    params: { slug: project.slug },
+    props: { project }
+  }));
 }
 
-const projectSequence = projects.filter(p => !p.draft); // Use only published projects
+const publishedProjects = projects.filter(p => !p.draft);
 
-// The rest of your file content...
+const { project } = Astro.props;
+
+// Get project sequence for navigation
+const projectSequence = publishedProjects.map(p => p.slug);
+const currentIndex = projectSequence.indexOf(project.slug);
+const prevIndex = currentIndex === 0 ? projectSequence.length - 1 : currentIndex - 1;
+const nextIndex = currentIndex === projectSequence.length - 1 ? 0 : currentIndex + 1;
+const prevProject = publishedProjects[prevIndex];
+const nextProject = publishedProjects[nextIndex];
+---
+
+<BaseLayout title={`Bernard Gerber - ${project.title}`}>
+  <div class="project_hero">
+    <h1 id="project-title">{project.title}</h1>
+    <div class="content_txt-2">
+      <p class="project_home-category">{project.category}</p>
+      <p class="project_home-year">{project.year}</p>
+    </div>
+  </div>
+
+  <div class="content-wrapper">
+    <div id="project-images">
+      {project.media.map(item => {
+        if (item.type === 'vimeo') {
+          return <LiteVimeo videoId={item.videoId} />;
+        } else {
+          return <img src={item.url} alt={project.title} />;
+        }
+      })}
+    </div>
+
+    <div class="div_description">
+      {project.description.map(paragraph => (
+        <p class="text_description">{paragraph}</p>
+      ))}
+
+      {project.collaboration && project.collaboration.length > 0 && (
+        <p class="text_description">
+          {project.collaboration.some(c => c.url) ? 'Collaboration with: ' : ''}
+          {project.collaboration.map((collab, index) => {
+            const separator = index > 0
+              ? (index === project.collaboration.length - 1 ? ' and ' : ', ')
+              : '';
+
+            if (collab.url) {
+              return (
+                <Fragment>
+                  {separator}
+                  <a class="text_description" href={collab.url}>{collab.name}</a>
+                </Fragment>
+              );
+            } else {
+              return (
+                <Fragment>
+                  {separator}
+                  <span class="text_description">
+                    {collab.name}
+                    {collab.role && ` (${collab.role})`}
+                  </span>
+                </Fragment>
+              );
+            }
+          })}
+        </p>
+      )}
+    </div>
+  </div>
+
+  <div class="project-navigation" id="project-navigation">
+    <div class="nav-buttons">
+      <a id="prev-project" class="nav-button prev-button" href={`/${prevProject.slug}`}>
+        <span class="nav-text">Previous Project</span>
+      </a>
+      <a id="next-project" class="nav-button next-button" href={`/${nextProject.slug}`}>
+        <span class="nav-text">Next Project</span>
+      </a>
+    </div>
+  </div>
+</BaseLayout>

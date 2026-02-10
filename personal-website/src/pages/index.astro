@@ -1,10 +1,37 @@
 ---
-// Assuming the rest of the file is unchanged above this line
-const projects = [...] // Existing projects array
+import BaseLayout from '../layouts/BaseLayout.astro';
+import projects from '../data/projects.json';
 
 const publishedProjects = projects.filter(project => !project.draft);
-
-document.querySelector('#project-list').innerHTML = publishedProjects.map(project => {
-    return `<div>${project.name}</div>`;
-}).join('');
 ---
+
+<BaseLayout>
+  <div class="hero">
+    <h1 class="hero_txt">
+      <span class="name">Bernard Gerber</span> is a <span class="brazilian">Brazilian</span> multidisciplinary designer based in <span class="lisbon">Lisbon</span> concerned with giving shape to ideas and dedicated to exploring new territories between <span class="physical">physical</span> and <span class="digital">digital</span> worlds.
+    </h1>
+
+    <div class="mate-emoji" id="mateEmoji">🧉</div>
+    <div class="mate-emoji" id="brazilEmoji">🇧🇷</div>
+    <div class="mate-emoji" id="lisbonEmoji">🇵🇹</div>
+    <div class="mate-emoji" id="physicalEmoji">📃</div>
+    <div class="mate-emoji" id="digitalEmoji">💻</div>
+  </div>
+
+  <div class="content-wrapper" id="projects-container">
+    <div class="content">
+      {publishedProjects.map(project => (
+        <a href={`/${project.slug}`}>
+          <img class="content_img" src={project.coverImage} alt={project.title}>
+          <div class="content_txt">
+            <div class="content_txt-2">
+              <p class="project_home-title">{project.title}</p>
+              <p class="project_home-year">{project.year}</p>
+            </div>
+            <p class="project_home-category">{project.category}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
